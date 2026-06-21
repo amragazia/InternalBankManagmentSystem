@@ -1,0 +1,54 @@
+Account
+├── deposit()
+├── withdraw()
+├── transfer()
+└── check_balance()
+
+Bank
+├── create_account()
+├── search_account()
+├── archive_account()
+├── manage_transfer()
+└── list_accounts()
+
+Controller
+└── main()
+└── validate_name()
+└── 
+└── 
+└── 
+
+DB
+└── 
+└── 
+└── 
+└── 
+└──
+
+
+
+
+main.py
+│
+├── menus
+├── user input
+├── validation helpers
+│
+▼
+Bank class
+│
+├── business logic
+├── transfers
+├── account creation
+│
+▼
+Database class
+│
+├── SQL
+├── inserts
+├── updates
+├── selects
+│
+▼
+SQLite
+
