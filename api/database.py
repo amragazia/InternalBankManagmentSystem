@@ -8,11 +8,11 @@ class DataBase:
             "bank.db",
              check_same_thread=False
            )
-        self.cur = self.conn.cursor()
 
 
     def create_tables(self):
-        self.cur.execute("""
+        cur = self.conn.cursor()
+        cur.execute("""
         CREATE TABLE IF NOT EXISTS accounts(
             account_number INTEGER PRIMARY KEY,
             account_holder TEXT NOT NULL,
@@ -21,7 +21,7 @@ class DataBase:
             )
             """)
         
-        self.cur.execute("""
+        cur.execute("""
         CREATE TABLE IF NOT EXISTS transactions(
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             transaction_type TEXT NOT NULL,
@@ -31,7 +31,7 @@ class DataBase:
             timestamp TEXT NOT NULL
             )
              """)
-        
+        cur.close()
         self.conn.commit()
 
 
@@ -40,20 +40,24 @@ class DataBase:
 
     
     def get_next_account_number(self):
+        cur = self.conn.cursor()
 
-        self.cur.execute("""
+        cur.execute("""
         SELECT MAX(account_number)
         FROM accounts
         """)
 
-        result = self.cur.fetchone()
+        result = cur.fetchone()
+        cur = self.conn.cursor()
 
         if result[0] is None:
             return 1001
         return result[0] + 1
     
     def get_account(self, account_number):
-        self.cur.execute("""
+        cur = self.conn.cursor()
+
+        cur.execute("""
             SELECT account_number,
                    account_holder,
                    balance
@@ -61,13 +65,14 @@ class DataBase:
         WHERE account_number = ?
         AND status = 'ACTIVE'
         """, (account_number,))
-    
-        return self.cur.fetchone()
+        cur.close()
+        return cur.fetchone()
     
 
     def insert_account(self, account):
+        cur = self.conn.cursor()
 
-        self.cur.execute("""
+        cur.execute("""
         INSERT INTO accounts
         (account_number, account_holder, balance, status)
         VALUES (?, ?, ?, ?)
@@ -78,15 +83,28 @@ class DataBase:
             account.balance,
             "ACTIVE"
         ))
+        cur.close()
         self.conn.commit()
 
+
+    def update_acc_status_when_archived(self, status, account_number):
+        cur = self.conn.cursor()
+
+        cur.execute("""
+        UPDATE accounts
+        SET status = ?
+        WHERE account_number = ?
+        """, (status, account_number))
+        cur.close()
+        self.conn.commit()
 
 
     def insert_transaction(self, transaction_type, amount, src, dest):
 
         timestamp = datetime.now().isoformat()
-
-        self.cur.execute("""
+        
+        cur = self.conn.cursor()
+        cur.execute("""
         INSERT INTO transactions
         (
             transaction_type,
@@ -104,30 +122,33 @@ class DataBase:
             dest,
             timestamp
         ))
+        cur.close()
         self.conn.commit()
 
     
     def get_transactions(self):
-        self.cur.execute("""
+        cur = self.conn.cursor()
+        cur.execute("""
         SELECT *
         FROM transactions
         ORDER BY id DESC
         """)
-        return self.cur.fetchall()
+        cur.close()
+        return cur.fetchall()
 
     def archive_account(self, account_number):
-
-        self.cur.execute("""
+        cur = self.conn.cursor()
+        cur.execute("""
         UPDATE accounts
         SET status = 'ARCHIVED'
         WHERE account_number = ?
         """, (account_number,))
-
+        cur.close()
         self.conn.commit()
 
     def get_all_accounts(self):
-
-        self.cur.execute("""
+        cur = self.conn.cursor()
+        cur.execute("""
 
         SELECT account_number,
                account_holder,
@@ -135,25 +156,26 @@ class DataBase:
         FROM accounts
         WHERE status = 'ACTIVE'
         """)
-
-        return self.cur.fetchall()
+        cur.close()
+        return cur.fetchall()
 
 
     def count_accounts(self):
+        cur = self.conn.cursor()
 
-        self.cur.execute("""
+        cur.execute("""
         SELECT COUNT(*)
         FROM accounts
         WHERE status = 'ACTIVE'
 
         """)
-
-        return self.cur.fetchone()[0]
+        cur.close()
+        return cur.fetchone()[0]
     
 
     def update_balance(self, balance, account_number):
-
-        self.cur.execute("""
+        cur = self.conn.cursor()
+        cur.execute("""
 
         UPDATE accounts
         SET balance = ?
@@ -161,7 +183,7 @@ class DataBase:
        """, (balance, account_number)       
        )
 
-
+        cur.close()
         self.conn.commit()
 
     def close(self):
