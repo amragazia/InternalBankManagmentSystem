@@ -4,7 +4,10 @@ from datetime import datetime
 class DataBase:
 
     def __init__(self):
-        self.conn = sqlite3.connect("bank.db")
+        self.conn = sqlite3.connect(
+            "bank.db",
+             check_same_thread=False
+           )
         self.cur = self.conn.cursor()
 
 

@@ -129,27 +129,14 @@ def main():
                         continue
                     dest_acc_num = int(dest_acc_num)
                     
-                    request = account.transfer_request(dest_acc_num, amount)
-                    if not request:
-                        print("Invalid Transfer.")
-                        continue
-                    else:
-                        src, dest, amount = request
-                        if not bank_app.manage_transfer(src, dest, amount):
-                            print("Invalid Transfer.")
-                            continue
-                        else: 
-                            print("Transferred Successfully!")
-                            new_balance = bank_app.search_account(src)
-                            print(f"New balance is {new_balance.check_balance()}")
+                    xfer = bank_app.manage_transfer(account.account_number, dest_acc_num, amount)
+                    if not xfer:
+                        print("Invalid xfer!") 
+                    else: 
+                        print("Transferred Successfully!")
+            
+                        print(f"New balance is {account.check_balance()}")
 
-
-                    bank_app.db.insert_transaction(
-                        "TRANSFER",
-                        amount,
-                        src,
-                        dest
-                    )
 
                 elif do == "4":
                     balance = account.check_balance()

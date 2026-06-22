@@ -24,10 +24,10 @@ class Account:
         self.balance -= amount
         return True
     
-    def transfer_request(self, destination_account, amount): #transfer request to bank
-        if not 0 < amount <= self.balance:
-            return False
-        return self.account_number, destination_account, amount
+    # def transfer_request(self, destination_account, amount): #transfer request to bank
+    #     if not 0 < amount <= self.balance:
+    #         return False
+    #     return self.account_number, destination_account, amount
 
     def check_balance(self):
         return self.balance
@@ -86,6 +86,8 @@ class Bank:
             return False
         if source_account == destination_account:
             return False
+        if not 0 < amount <= src.balance:
+            return False
         if not src.withdraw(amount):
             return False
         if not dest.deposit(amount):
@@ -99,6 +101,15 @@ class Bank:
         self.db.update_balance(
             dest.balance,
             dest.account_number
+        )
+
+
+
+        self.db.insert_transaction(
+            "TRANSFER",
+            amount,
+            src,
+            dest
         )
         return True
     
@@ -118,7 +129,19 @@ class Bank:
         return accounts
 
     def ls_transactions(self):
-        return self.db.get_transactions()
+        rows =  self.db.get_transactions()
+        transactions = []
+
+        for row in rows:
+            transactions.append({
+            "type": row[1],
+            "amount": row[2],
+            "source": row[3],
+            "destination": row[4],
+            "timestamp": row[5]     
+            })
+
+        return transactions
             
 
     def __len__(self):
