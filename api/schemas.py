@@ -1,15 +1,15 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 class AccountCreate(BaseModel):
     name: str
-    balance: float
+    balance: float = Field(ge=1000)
 
 
 
 class AmountRequest(BaseModel):
-    amount: float
+    amount: float = Field(gt=0)
 
 
 class TransferRequest(BaseModel):
-        dest: int
-        amount: float
+    dest: int
+    amount: float = Field(gt=0)

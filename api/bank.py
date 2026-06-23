@@ -77,41 +77,41 @@ class Bank:
             return None
   
         self.db.archive_account(account_to_be_archived)
+        self.db.update_acc_status_when_archived("ARCHIVED", account_to_be_archived)
         return account
 
     def manage_transfer(self, source_account, destination_account, amount):
         src = self.search_account(source_account)
         dest = self.search_account(destination_account)
+
         if (src is None or dest is None):
             return False
         if source_account == destination_account:
             return False
+        
         if not 0 < amount <= src.balance:
             return False
-        if not src.withdraw(amount):
-            return False
-        if not dest.deposit(amount):
-            src.deposit(amount)   # rollback
-            return False
+
+        new_src_balance = src.balance - amount
+        new_dest_balance = dest.balance + amount
+
         
-        self.db.update_balance(
-            src.balance,
-            src.account_number
-        )
-        self.db.update_balance(
-            dest.balance,
-            dest.account_number
+        success = self.db.execute_atomic_transfer(
+            src.account_number,
+            dest.account_number,
+            new_src_balance,
+            new_dest_balance,
+            amount
         )
 
+        if success:
+            src.balance = new_src_balance
+            src.balance = new_dest_balance
+            return True
 
-
-        self.db.insert_transaction(
-            "TRANSFER",
-            amount,
-            src,
-            dest
-        )
-        return True
+        return False
+    
+    
     
     def ls_accounts(self): 
         rows = self.db.get_all_accounts()

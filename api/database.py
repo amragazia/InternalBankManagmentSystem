@@ -99,6 +99,40 @@ class DataBase:
         self.conn.commit()
 
 
+
+    def execute_atomic_transfer(
+        self, src_acc_num, dest_acc_num, src_new_bal, dest_new_bal, amount
+            ):
+        
+        cur = self.conn.cursor()
+        timestamp = datetime.now().isoformat()
+
+        try:
+            cur.execute("""
+            UPDATE accounts SET balance = ? WHERE account_number = ?
+            """, (src_new_bal, src_acc_num))
+            cur.execute("""
+            UPDATE accounts SET balance = ? WHERE account_number = ?
+            """, (dest_new_bal, dest_acc_num))
+
+            cur.execute("""
+            INSERT INTO transactions 
+            (transaction_type, amount, source_account, destination_account, timestamp)
+            VALUES (?, ?, ?, ?, ?)
+            """, ("TRANSFER", amount, src_acc_num, dest_acc_num, timestamp))
+
+            self.conn.commit()
+            return True
+        
+        except sqlite3.Error as e:
+            self.conn.rollback()
+            print(f"Transaction failed: {e}")
+            return False
+        
+        finally:
+            cur.close()
+
+
     def insert_transaction(self, transaction_type, amount, src, dest):
 
         timestamp = datetime.now().isoformat()
