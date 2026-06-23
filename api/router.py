@@ -1,7 +1,13 @@
+from typing import Any
 
-from bank import Bank
 from fastapi import FastAPI, HTTPException
-from schemas import AccountCreate, AmountRequest, TransferRequest
+
+try:
+    from .bank import Bank
+    from .schemas import AccountCreate, AmountRequest, TransferRequest
+except ImportError:  # pragma: no cover - fallback for direct script execution
+    from bank import Bank
+    from schemas import AccountCreate, AmountRequest, TransferRequest
 
 
 bank_app = Bank()
@@ -9,7 +15,7 @@ app = FastAPI()
 
 
 @app.post("/accounts")
-def create_account(account: AccountCreate):
+def create_account(account: AccountCreate) -> dict[str, Any]:
 
     acc = bank_app.create_account(
         account.name,
@@ -32,7 +38,7 @@ def create_account(account: AccountCreate):
 
 
 @app.get("/accounts/{id}")
-def get_account(id: int):
+def get_account(id: int) -> dict[str, Any]:
 
     account = bank_app.search_account(id)
 
@@ -54,10 +60,10 @@ def get_account(id: int):
 
 
 @app.get("/accounts")
-def get_accounts():
+def get_accounts() -> dict[str, list[dict[str, Any]]]:
     accounts = bank_app.ls_accounts()
 
-    acc_list = []
+    acc_list: list[dict[str, Any]] = []
     for account in accounts:
         acc_list.append(
             {
@@ -77,7 +83,7 @@ def get_accounts():
 
 
 @app.post("/accounts/{id}/deposit")
-def deposit_account(id: int, amount: AmountRequest):
+def deposit_account(id: int, amount: AmountRequest) -> dict[str, Any]:
     
     account = bank_app.search_account(id)
     if not account:
@@ -110,7 +116,7 @@ def deposit_account(id: int, amount: AmountRequest):
     }
 
 @app.post("/accounts/{id}/withdraw")
-def withdraw_account(id: int, amount: AmountRequest):
+def withdraw_account(id: int, amount: AmountRequest) -> dict[str, Any]:
     
     account = bank_app.search_account(id)
     if not account:
@@ -142,7 +148,7 @@ def withdraw_account(id: int, amount: AmountRequest):
     }
 
 @app.post("/accounts/{id}/transfer")
-def transfer_account(id: int, transfer: TransferRequest):
+def transfer_account(id: int, transfer: TransferRequest) -> dict[str, Any]:
 
     xfer = bank_app.manage_transfer(id, transfer.dest, transfer.amount)
 
@@ -163,7 +169,7 @@ def transfer_account(id: int, transfer: TransferRequest):
 
 
 @app.get("/transactions")
-def get_transactions():
+def get_transactions() -> dict[str, list[dict[str, Any]]]:
 
     transactions = bank_app.ls_transactions()
     
@@ -175,7 +181,7 @@ def get_transactions():
 
 
 @app.delete("/accounts/{id}/archive")
-def archive_account(id: int):
+def archive_account(id: int) -> dict[str, Any]:
 
     archived_acc = bank_app.archive_account(id)
 
