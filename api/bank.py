@@ -76,8 +76,7 @@ class Bank:
         if account is None:
             return None
   
-        self.db.archive_account(account_to_be_archived)
-        self.db.update_acc_status_when_archived("ARCHIVED", account_to_be_archived)
+        self.db.update_acc_status("ARCHIVED", account_to_be_archived)
         return account
 
     def manage_transfer(self, source_account, destination_account, amount):
