@@ -71,7 +71,7 @@ class FrontendHandler(BaseHTTPRequestHandler):
         if self.headers.get("Content-Type"):
             headers["Content-Type"] = self.headers.get("Content-Type")
 
-        request = urllib.request.Request(target_url, data=body, headers=headers, method=self.command)
+        request = urllib.request.Request(target_url, data=body, headers=headers, method=self.command) # type: ignore
         try:
             with urllib.request.urlopen(request, timeout=10) as response:
                 payload = response.read()
