@@ -102,7 +102,7 @@ class Bank:
             return account
         return None
         
-    def Withdraw(self, account_id: int,amount: float | int | str) -> Account | None:
+    def withdraw(self, account_id: int,amount: float | int | str) -> Account | None:
             account = self.search_account(account_id)
             if account is None:
                 return None

@@ -85,31 +85,13 @@ def get_accounts() -> dict[str, list[dict[str, Any]]]:
 @app.post("/accounts/{id}/deposit")
 def deposit_account(id: int, amount: AmountRequest) -> dict[str, Any]:
     
-    account = bank_app.search_account(id)
+    account = bank_app.deposit(id, amount.amount)
     if not account:
         raise HTTPException(
             status_code=404,
-            detail="Account not found"
+            detail="Account not found or invalid deposit amount"
         )
     
-    
-    dep = account.deposit(amount.amount)
-    if not dep:
-        raise HTTPException(
-            status_code=400,
-            detail="Invalid deposit amount"
-        )       
-    bank_app.db.update_balance(
-        account.balance,
-        account.account_number
-    )
-
-    bank_app.db.insert_transaction(
-        "DEPOSIT",
-        amount.amount,
-        account.account_number,
-        None
-    )
     return {
         "Message":  "Deposit successful",
         "new_balance": account.balance
@@ -118,30 +100,13 @@ def deposit_account(id: int, amount: AmountRequest) -> dict[str, Any]:
 @app.post("/accounts/{id}/withdraw")
 def withdraw_account(id: int, amount: AmountRequest) -> dict[str, Any]:
     
-    account = bank_app.search_account(id)
+    account = bank_app.withdraw(id, amount.amount)
     if not account:
         raise HTTPException(
             status_code=404,
-            detail="Account not found"
+            detail="Account not found or invalid withdraw amount"
             )
-    widr = account.withdraw(amount.amount)
-    if not widr:
-        raise HTTPException(
-            status_code=400,
-            detail="Invalid Withdraw"
-        )
     
-    bank_app.db.update_balance(
-        account.balance,
-        account.account_number
-    )
-
-    bank_app.db.insert_transaction(
-        "WITHDRAW",
-        amount.amount,
-        account.account_number,
-        None
-    )
     return {
         "Message":  "Withdraw successful",
         "new_balance": account.balance
