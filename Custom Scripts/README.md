@@ -14,4 +14,3 @@ This folder contains examples for stressing the bank API with concurrent POST re
 ```
 
 > Use an existing account ID for the target endpoint. For withdraw requests, the account must have enough balance.
-
