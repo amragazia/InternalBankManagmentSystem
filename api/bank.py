@@ -30,7 +30,8 @@ class Bank:
 
         account_number = self.db.get_next_account_number()
         account = Account(account_holder, account_number, balance)
-        self.db.insert_account(account)
+        user_id = self.db.get_next_user_id()
+        self.db.insert_account(account, user_id = user_id)  
         return account
 
     def search_account(self, account_to_be_searched: int) -> Account | None:
