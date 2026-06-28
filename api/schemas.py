@@ -13,3 +13,10 @@ class AmountRequest(BaseModel):
 class TransferRequest(BaseModel):
     dest: int
     amount: float = Field(gt=0)
+
+
+
+
+class UserCreate(BaseModel):
+    username: str
+    password: str = Field(min_length=8)
