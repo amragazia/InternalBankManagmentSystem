@@ -1,22 +1,24 @@
 from typing import Any
 
 from fastapi import FastAPI, HTTPException
-
+from passlib.context import CryptContext
 try:
     from .bank import Bank
-    from .schemas import AccountCreate, AmountRequest, TransferRequest
+    from .schemas import AccountCreate, AmountRequest, TransferRequest, UserCreate
 except ImportError:  # pragma: no cover - fallback for direct script execution
     from bank import Bank
-    from schemas import AccountCreate, AmountRequest, TransferRequest
+    from schemas import AccountCreate, AmountRequest, TransferRequest, UserCreate
 
 
 bank_app = Bank()
 app = FastAPI()
 
+pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
-@app.post("/accounts")
-def create_account(account: AccountCreate) -> dict[str, Any]:
 
+
+@app.post("/register")
+def register_user(account: AccountCreate, user: UserCreate) -> dict[str, Any]:
     acc = bank_app.create_account(
         account.name,
         account.balance
@@ -28,13 +30,49 @@ def create_account(account: AccountCreate) -> dict[str, Any]:
             detail="Account Creation Failed"
         )
     
+
+    hashed_password = pwd_context.hash(user.password)
+    success = bank_app.db.insert_user(user.username, hashed_password)
+
+
+    if not success:
+        raise HTTPException(
+            status_code=400,
+            detail="Username already exists"
+        )
     
+
+
     return {
 
+        "message": f"User {user.username} registered successfully",
         "account_number": acc.account_number,
         "holder": acc.account_holder,
         "balance": acc.balance
     }
+
+
+
+@app.post("/login")
+def login_user(user: UserCreate) -> dict[str, Any]:
+
+    db_user = bank_app.db.get_user_by_username(user.username)
+    if not db_user:
+        raise HTTPException(
+            status_code=404,
+            detail="User not found"
+        )
+
+    if not pwd_context.verify(user.password, db_user["password_hash"]):
+        raise HTTPException(
+            status_code=401,
+            detail="Invalid username or password"
+        )
+
+    return {"message": "Login successful! (JWT token coming soon)"}  
+
+
+
 
 
 @app.get("/accounts/{id}")
