@@ -16,8 +16,12 @@ class DataBase:
     def __init__(self, db_path: str = "bank.db") -> None:
         self.conn = sqlite3.connect(db_path, check_same_thread=False)
 
-        # 3. Row Factory for dict-like access
+        # Row Factory for dict-like access
         self.conn.row_factory = sqlite3.Row
+
+        # Enable foreign key support
+        self.conn.execute("PRAGMA foreign_keys = ON")  
+
 
     def create_tables(self) -> None:
         with self.conn:
@@ -27,7 +31,9 @@ class DataBase:
                 account_number INTEGER PRIMARY KEY,
                 account_holder TEXT NOT NULL,
                 balance REAL NOT NULL,
-                status TEXT NOT NULL
+                status TEXT NOT NULL,
+                user_id INTEGER NOT NULL,
+                FOREIGN KEY (user_id) REFERENCES users(id)
             )
             """
             )
@@ -44,6 +50,67 @@ class DataBase:
             )
             """
             )
+
+            self.conn.execute(
+                """
+            CREATE TABLE IF NOT EXISTS users(
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                username TEXT NOT NULL UNIQUE,
+                password_hash TEXT NOT NULL
+            )
+            """
+            )
+
+
+    def get_next_user_id(self) -> int:
+        cur = self.conn.cursor()
+        cur.execute(
+            """
+            SELECT MAX(id)
+            FROM users
+            """
+        )
+        result = cur.fetchone()
+        cur.close()
+
+        if result is None:
+            return 1
+
+        max_user_id = result[0]
+        return 1 if max_user_id is None else int(max_user_id) + 1
+    
+
+    def insert_user(self, username: str, password_hash: str) -> bool:
+        try:
+            with self.conn:
+                self.conn.execute(
+                    """
+                INSERT INTO users (username, password_hash)
+                VALUES (?, ?)
+                """,
+                (username, password_hash),
+            )
+                
+            return True
+        except sqlite3.IntegrityError:
+            return False  # Username already exists
+        
+
+
+    def get_user_by_username(self, username: str) -> sqlite3.Row | None:
+        cur = self.conn.cursor()
+        cur.execute(
+            """
+            SELECT *
+            FROM users
+            WHERE username = ?
+            """,
+            (username,),
+        )
+        result = cur.fetchone()
+        cur.close()
+        return result
+
 
     def get_next_account_number(self) -> int:
         cur = self.conn.cursor()
@@ -77,15 +144,15 @@ class DataBase:
         cur.close()
         return result
 
-    def insert_account(self, account: Account) -> None:
+    def insert_account(self, account: Account, user_id: int) -> None:
         with self.conn:
             self.conn.execute(
                 """
             INSERT INTO accounts
-            (account_number, account_holder, balance, status)
-            VALUES (?, ?, ?, ?)
+            (account_number, account_holder, balance, status, user_id)
+            VALUES (?, ?, ?, ?, ?)
             """,
-                (account.account_number, account.account_holder, account.balance, "ACTIVE"),
+                (account.account_number, account.account_holder, account.balance, "ACTIVE", user_id),
             )
 
     def update_acc_status(self, status: str, account_number: int) -> None:
